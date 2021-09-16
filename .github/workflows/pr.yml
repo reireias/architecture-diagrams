@@ -1,0 +1,53 @@
+name: ci-pr
+
+on: [pull_request]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9.7'
+
+      - name: Setup Graphviz
+        uses: ts-graphviz/setup-graphviz@v1
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Generate diagrams
+        run: python diagram.py
+
+      - name: Upload a picture
+        uses: devicons/public-upload-to-imgur@v2.2.1
+        id: imgur_step
+        with:
+          path: ./diagram.png
+          client_id: ${{secrets.IMGUR_CLIENT_ID}}
+
+      - name: Comment on the PR about the result
+        uses: actions/github-script@v4.1.0
+        env:
+          IMG_URL: ${{ fromJSON(steps.imgur_step.outputs.imgur_urls)[0] }}
+        with:
+          script: |
+            const url = process.env.IMG_URL
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `![Image](${url})`
+            })
