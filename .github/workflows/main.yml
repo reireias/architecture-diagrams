@@ -1,0 +1,48 @@
+name: main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9.7'
+
+      - name: Setup Graphviz
+        uses: ts-graphviz/setup-graphviz@v1
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Generate diagrams
+        run: python diagram.py
+
+      - name: Prepare publish image
+        run: |
+          mkdir images
+          mv diagram.png images
+
+      - name: Publish image
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          REPO: self
+          BRANCH: dist
+          FOLDER: images
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
