@@ -31,23 +31,21 @@ jobs:
       - name: Generate diagrams
         run: python diagram.py
 
-      - name: Upload a picture
-        uses: devicons/public-upload-to-imgur@v2.2.1
-        id: imgur_step
-        with:
-          path: ./diagram.png
-          client_id: ${{secrets.IMGUR_CLIENT_ID}}
-
-      - name: Comment on the PR about the result
-        uses: actions/github-script@v4.1.0
+      # see: https://github.community/t/pull-request-attribute-empty-in-workflow-run-event-object-for-pr-from-forked-repo/154682/3
+      - name: Prepare upload artifact
         env:
-          IMG_URL: ${{ fromJSON(steps.imgur_step.outputs.imgur_urls)[0] }}
+          PR_NUM: ${{ github.event.number }}
+        run: |
+          mkdir images
+          mv diagram.png images
+          echo $PR_NUM > images/pr_num.txt
+
+      # NOTE: Dependabot PRs will run with read-only permission.
+      #       see: https://github.blog/changelog/2021-02-19-github-actions-workflows-triggered-by-dependabot-prs-will-run-with-read-only-permissions/
+      #       Upload the image and PR number to the artifact, and use Secret to upload the image to imgur in the main branch job triggered by workflow_run.
+      #       Then comment the image in the PR.
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
         with:
-          script: |
-            const url = process.env.IMG_URL
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `![Image](${url})`
-            })
+          name: diagram
+          path: images
