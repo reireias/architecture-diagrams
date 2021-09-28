@@ -35,7 +35,7 @@ jobs:
           client_id: ${{secrets.IMGUR_CLIENT_ID}}
 
       - name: Comment on the PR about the result
-        uses: actions/github-script@v4.1.0
+        uses: actions/github-script@v5
         env:
           IMG_URL: ${{ fromJSON(steps.imgur_step.outputs.imgur_urls)[0] }}
           PR_NUM: ${{ steps.pr_num_reader.outputs.content }}
