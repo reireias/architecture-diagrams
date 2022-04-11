@@ -45,7 +45,7 @@ jobs:
       #       Upload the image and PR number to the artifact, and use Secret to upload the image to imgur in the main branch job triggered by workflow_run.
       #       Then comment the image in the PR.
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: diagram
           path: images
